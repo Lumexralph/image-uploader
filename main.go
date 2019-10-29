@@ -5,18 +5,26 @@
 package main
 
 import (
-	"os"
+	"fmt"
+	"github.com/Lumexralph/image-uploader/htmlform"
 	"github.com/joho/godotenv"
+	"log"
+	"os"
 )
 
 func main() {
 	err := godotenv.Load()
-	checkError(err)
+	if err != nil {
+		log.Println("Could not load env. file...")
+	}
 
 	// generate the data and token
 	token := os.Getenv("TOKEN")
-	data := TemplateData{"brankas", token}
-	tpl := generateTemplate()
-	err = templateProcessor(tpl, data)
-	checkError(err)
+	data := htmlform.TemplateData{
+		Title: "brankas",
+		Token: token,
+	}
+	tmpl, err := htmlform.TemplateProcessor(htmlform.Tpl, data)
+	fmt.Println(tmpl)
+
 }
