@@ -20,11 +20,11 @@ func main() {
 
 	// generate the data and token
 	token := os.Getenv("TOKEN")
-	data := template.TemplateData{
+	data := template.Data{
 		Title: "brankas",
 		Token: token,
 	}
-	tmpl, err := template.TemplateProcessor(htmlform.Tpl, data)
+	tmpl, err := template.Processor(template.Tpl, data)
 	fmt.Println(tmpl)
 
 }

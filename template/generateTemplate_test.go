@@ -1,6 +1,6 @@
 // Test that the template is generated and token is added to the
 // template on generation
-package htmlform
+package template
 
 import (
 	"strings"
@@ -8,8 +8,8 @@ import (
 )
 
 func TestTemplateProcessor(t *testing.T) {
-	wantData := TemplateData{"brankas", "12345"}
-	gotTemplate, err := TemplateProcessor(Tpl, wantData)
+	wantData := Data{"brankas", "12345"}
+	gotTemplate, err := Processor(Tpl, wantData)
 
 	if err != nil || gotTemplate == "" {
 		t.Fatalf("TemplateProcessor(%s, %+v) got %+v; could not process template \n", Tpl, wantData, err)
@@ -21,8 +21,8 @@ func TestTemplateProcessor(t *testing.T) {
 	}
 
 	wantTemplate = `<form action="" method="post">
-						<label for="data">Name:</label>
-						<input id="data" type="file" name="data">
+						<label for="data">Upload an Image:</label>
+						<input id="data" type="file" name="data" accept=".jpg, .jpeg, .png, .gif">
 						<input id="auth" type="text" name="auth" value="12345" hidden>
 						<br/>
 						<input type="submit" value="Upload">

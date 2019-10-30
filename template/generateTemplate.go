@@ -1,4 +1,4 @@
-package htmlform
+package template
 
 import (
 	"bytes"
@@ -15,8 +15,8 @@ const Tpl = `
 				</head>
 				<body>
 					<form action="" method="post">
-						<label for="data">Name:</label>
-						<input id="data" type="file" name="data">
+						<label for="data">Upload an Image:</label>
+						<input id="data" type="file" name="data" accept=".jpg, .jpeg, .png, .gif">
 						<input id="auth" type="text" name="auth" value="{{ .Token }}" hidden>
 						<br/>
 						<input type="submit" value="Upload">
@@ -24,13 +24,13 @@ const Tpl = `
 				</body>
 				</html>`
 
-// TemplateData will model data to be infused into the template
-type TemplateData struct {
+// Data will model data to be infused into the template
+type Data struct {
 	Title, Token string
 }
 
-// TemplateProcessor adds a generated token from the environment to the template
-func TemplateProcessor(tpl string, data TemplateData) (string, error) {
+// Processor adds a generated token from the environment to the template
+func Processor(tpl string, d Data) (string, error) {
 	var b bytes.Buffer
 
 	t, err := template.New("webpage").Parse(tpl)
@@ -38,7 +38,7 @@ func TemplateProcessor(tpl string, data TemplateData) (string, error) {
 		return "", err
 	}
 
-	err = t.Execute(&b, data)
+	err = t.Execute(&b, d)
 	if err != nil {
 		return "", err
 	}
