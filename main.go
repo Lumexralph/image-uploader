@@ -5,8 +5,8 @@
 package main
 
 import (
+	"github.com/Lumexralph/image-uploader/template"
 	"fmt"
-	"github.com/Lumexralph/image-uploader/htmlform"
 	"github.com/joho/godotenv"
 	"log"
 	"os"
@@ -20,11 +20,11 @@ func main() {
 
 	// generate the data and token
 	token := os.Getenv("TOKEN")
-	data := htmlform.TemplateData{
+	data := template.TemplateData{
 		Title: "brankas",
 		Token: token,
 	}
-	tmpl, err := htmlform.TemplateProcessor(htmlform.Tpl, data)
+	tmpl, err := template.TemplateProcessor(htmlform.Tpl, data)
 	fmt.Println(tmpl)
 
 }
