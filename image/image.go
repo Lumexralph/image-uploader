@@ -4,13 +4,13 @@
 package image
 
 import (
+	"path/filepath"
 	"io"
 	"log"
 	"os"
 )
 
 var BUFFERSIZE = 1024
-const imageDir = "/tmp/"
 
 // Data to model the image data to be uploaded
 type Data struct {
@@ -30,16 +30,9 @@ func New(name, contentType string, size int, f *os.File) *Data {
 }
 
 // Store method will create the image file and store it in a tmp directory
-func (img *Data) Store() (string, error) {
-	// close the opened file to free resources
-	defer func() {
-        if err := img.file.Close(); err != nil {
-            log.Println(err)
-        }
-	}()
-
+func (img *Data) Store(imageDir string) (string, error) {
 	// create a destination file
-	dstFile := imageDir + img.name + "." + img.contentType
+	dstFile := filepath.Join(imageDir, img.name + "." + img.contentType)
 	dst, err := os.Create(dstFile)
 	if err != nil {
 		return dstFile, err
@@ -69,5 +62,6 @@ func (img *Data) Store() (string, error) {
 			return dstFile, err
 		}
 	}
+	log.Printf("Image %s successfully created in the directory %s", img.name, imageDir)
 	return dstFile, nil
 }

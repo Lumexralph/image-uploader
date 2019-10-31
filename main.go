@@ -41,16 +41,23 @@ func main() {
 	if err != nil {
 		log.Println(err)
 	}
+	// close the opened file to free resources
+	defer func() {
+        if err := f.Close(); err != nil {
+            log.Println(err)
+        }
+	}()
 
 	// create a new image
 	img := image.New("sample2", "png", 100, f)
+
 	// store in a temp directory
-	fpath, err := img.Store()
+	// todo: get the destination directory from environment variable
+	fpath, err := img.Store("/tmp")
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
 	log.Println(fpath)
-
 }
