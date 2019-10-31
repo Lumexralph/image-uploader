@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"os"
 	"image"
 	"log"
 	"net/http"
@@ -34,7 +35,8 @@ func imageContentHandler(next http.Handler) http.Handler {
 			return
 		}
 
-		file, _, err := r.FormFile("image")
+		r.ParseForm()
+		file, _, err := r.FormFile("data")
 		if err != nil {
 			log.Print(err)
 			http.Error(w, http.StatusText(400), 400)
@@ -44,9 +46,9 @@ func imageContentHandler(next http.Handler) http.Handler {
 		// verify the image
 		_, _, err = image.Decode(file)
 		if err != nil {
-		  log.Printf("could not decode the file into an image")
-		  http.Error(w, "could not decode body image", 400)
-		  return
+			log.Printf("could not decode the file into an image")
+			http.Error(w, "could not decode body image", 400)
+			return
 		}
 	}
 
@@ -55,6 +57,31 @@ func imageContentHandler(next http.Handler) http.Handler {
 
 // parse body of the request interface
 // parse the html with auth field, check that token are the same
+func formParser(next http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "POST" {
+			http.Error(w, http.StatusText(400), 400)
+			return
+		}
+
+		r.ParseForm()
+		//Call to ParseForm makes form fields available.
+		err := r.ParseForm()
+		if err != nil {
+			log.Println("Error parsing the form", err)
+			http.Error(w, http.StatusText(500), 500)
+		}
+
+		token := r.PostFormValue("auth")
+		envToken := os.Getenv("TOKEN")
+		if token != envToken {
+			http.Error(w, http.StatusText(403), 403)
+			return
+		}
+	}
+
+	return http.HandlerFunc(fn)
+}
 
 // check the file size
 func fileSizeHandler(next http.Handler) http.Handler {
@@ -64,7 +91,7 @@ func fileSizeHandler(next http.Handler) http.Handler {
 			return
 		}
 
-		file, _, err := r.FormFile("image")
+		file, _, err := r.FormFile("data")
 		if err != nil {
 			log.Print(err)
 			http.Error(w, http.StatusText(400), 400)
@@ -77,8 +104,8 @@ func fileSizeHandler(next http.Handler) http.Handler {
 		if err != nil {
 			log.Fatalln("Error getting the image size", err)
 		}
-		if size  > sizeLimit {
-			http.Error(w, "Image size should not be above 8MB", 400)
+		if size > sizeLimit {
+			http.Error(w, "Image size should not be above 8MB", 403)
 			return
 		}
 	}
