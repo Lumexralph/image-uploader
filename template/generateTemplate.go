@@ -14,10 +14,11 @@ const Tpl = `
 					<title>{{.Title}}</title>
 				</head>
 				<body>
-					<form action="" method="post">
+					<form enctype="multipart/form-data" action="/upload" method="post">
 						<label for="data">Upload an Image:</label>
+						<br />
 						<input id="data" type="file" name="data" accept=".jpg, .jpeg, .png, .gif">
-						<input id="auth" type="text" name="auth" value="{{ .Token }}" hidden>
+						<input id="auth" type="hidden" name="auth" value="{{ .Token }}">
 						<br/>
 						<input type="submit" value="Upload">
 					</form>

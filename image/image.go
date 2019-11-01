@@ -4,6 +4,7 @@
 package image
 
 import (
+	"mime/multipart"
 	"path/filepath"
 	"io"
 	"log"
@@ -14,16 +15,15 @@ var BUFFERSIZE = 1024
 
 // Data to model the image data to be uploaded
 type Data struct {
-	name, contentType string
+	name string
 	size int
-	file *os.File
+	file multipart.File
 }
 
 // New method will create a new image data
-func New(name, contentType string, size int, f *os.File) *Data {
+func New(name string, size int, f multipart.File) *Data {
 	return &Data{
 		name,
-		contentType,
 		size,
 		f,
 	}
@@ -32,7 +32,7 @@ func New(name, contentType string, size int, f *os.File) *Data {
 // Store method will create the image file and store it in a tmp directory
 func (img *Data) Store(imageDir string) (string, error) {
 	// create a destination file
-	dstFile := filepath.Join(imageDir, img.name + "." + img.contentType)
+	dstFile := filepath.Join(imageDir, img.name)
 	dst, err := os.Create(dstFile)
 	if err != nil {
 		return dstFile, err

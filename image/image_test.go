@@ -16,13 +16,13 @@ func TestImageCreation(t *testing.T) {
 	}
 	// run assertions
 	cases := []struct {
-		name, imageType, want string
+		name, want string
 		size            int
 	}{
-		{"sample", "png", "testdir/sample.png", 100},
-		{"sample2", "jpg", "testdir/sample2.jpg", 1000},
-		{"sample3", "jpeg", "testdir/sample3.jpeg", 1000},
-		{"sample4", "gif", "testdir/sample4.gif", 1000},
+		{"sample.png", "testdir/sample.png", 100},
+		{"sample2.jpg", "testdir/sample2.jpg", 1000},
+		{"sample3.jpeg", "testdir/sample3.jpeg", 1000},
+		{"sample4.gif", "testdir/sample4.gif", 1000},
 	}
 
 	for _, tc := range cases {
@@ -32,7 +32,7 @@ func TestImageCreation(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			img := New(tc.name, tc.imageType, tc.size, f)
+			img := New(tc.name, tc.size, f)
 			got, err := img.Store(imgDir)
 
 			if err != nil {

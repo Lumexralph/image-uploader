@@ -20,10 +20,16 @@ func TestTemplateProcessor(t *testing.T) {
 		t.Fatalf("TemplateProcessor(%s, %+v) got %+v; want %+v, could not find title  \n", Tpl, wantData, gotTemplate, wantTemplate)
 	}
 
-	wantTemplate = `<form action="" method="post">
+	wantTemplate = `<input id="auth" type="hidden" name="auth" value="12345">`
+	if !strings.Contains(gotTemplate, wantTemplate) {
+		t.Fatalf("TemplateProcessor(%s, %+v) got %+v; want %+v, could not find title  \n", Tpl, wantData, gotTemplate, wantTemplate)
+	}
+
+	wantTemplate = `<form enctype="multipart/form-data" action="/upload" method="post">
 						<label for="data">Upload an Image:</label>
+						<br />
 						<input id="data" type="file" name="data" accept=".jpg, .jpeg, .png, .gif">
-						<input id="auth" type="text" name="auth" value="12345" hidden>
+						<input id="auth" type="hidden" name="auth" value="12345">
 						<br/>
 						<input type="submit" value="Upload">
 					</form>`
