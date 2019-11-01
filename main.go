@@ -5,6 +5,7 @@
 package main
 
 import (
+	"github.com/Lumexralph/image-uploader/image"
 	"github.com/Lumexralph/image-uploader/template"
 	"fmt"
 	"github.com/joho/godotenv"
@@ -25,17 +26,7 @@ func main() {
 		Token: token,
 	}
 	tmpl, err := template.Processor(template.Tpl, data)
-	fmt.Println(tmpl)
-package main
 
-import (
-	"log"
-	"os"
-	"github.com/Lumexralph/image-uploader/image"
-)
-
-
-func main() {
 	// open the image
 	f, err := os.Open("example.png")
 	if err != nil {
@@ -60,4 +51,5 @@ func main() {
 	}
 
 	log.Println(fpath)
+	fmt.Println(tmpl)
 }
