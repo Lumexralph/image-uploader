@@ -39,7 +39,11 @@ func fileTypeHandler(next http.Handler) http.Handler {
 			http.Error(w, http.StatusText(400), 400)
 			return
 		}
-		r.ParseForm()
+		if err := r.ParseForm(); err != nil {
+			log.Println("Error parsing the form", err)
+			http.Error(w, http.StatusText(500), 500)
+			return
+		}
 		_, header, _ := r.FormFile("data")
 		format := []string{".jpeg", ".jpg", ".png", ".gif"}
 		for _, imgFormat := range format {
@@ -67,16 +71,12 @@ func checkAuthTokenHandler(next http.Handler) http.Handler {
 			return
 		}
 		//Call to ParseForm makes form fields available.
-		err := r.ParseForm()
-		if err != nil {
+		if err := r.ParseForm(); err != nil {
 			log.Println("Error parsing the form", err)
 			http.Error(w, http.StatusText(500), 500)
 			return
 		}
-		token := r.PostFormValue("auth")
-		log.Println(token)
-		envToken := os.Getenv("TOKEN")
-		if token != envToken {
+		if token := r.PostFormValue("auth"); token != os.Getenv("TOKEN") {
 			http.Error(w, http.StatusText(403), 403)
 			return
 		}
@@ -92,7 +92,11 @@ func imageContentHandler(next http.Handler) http.Handler {
 			http.Error(w, http.StatusText(400), 400)
 			return
 		}
-		r.ParseForm()
+		if err :=  r.ParseForm(); err != nil {
+			log.Println("Error parsing the form", err)
+			http.Error(w, http.StatusText(500), 500)
+			return
+		}
 		file, _, err := r.FormFile("data")
 		if err != nil {
 			log.Print(err)
@@ -100,10 +104,12 @@ func imageContentHandler(next http.Handler) http.Handler {
 			return
 		}
 		// verify the image
-		log.Println(file)
-		_, _, err = image.Decode(file)
-		if err != nil {
-			log.Println(err)
+		if _, _, err = image.Decode(file); err != nil {
+			log.Println("Decoding the image: ", err.Error())
+			// close the opened file to free resources
+			if err := file.Close(); err != nil {
+				log.Println("Closing file: ", err.Error())
+			}
 			http.Error(w, err.Error(), 400)
 			return
 		}
@@ -127,13 +133,7 @@ func fileSizeHandler(next http.Handler) http.Handler {
 		}
 		// verify the size of the file is not above 8MB
 		sizeLimit := int64(8 << 20)
-		size := header.Size
-		if err != nil {
-			log.Println("Error getting the image size", err)
-			http.Error(w, http.StatusText(500), 500)
-			return
-		}
-		if size > sizeLimit {
+		if header.Size > sizeLimit {
 			http.Error(w, "Image size should not be above 8MB", 403)
 			return
 		}
@@ -144,18 +144,20 @@ func fileSizeHandler(next http.Handler) http.Handler {
 
 // uploadImageHandler will handle storing the image to a temp directory
 func uploadImageHandler(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
-	f, h, err := r.FormFile("data")
+	if err := r.ParseForm(); err != nil {
+		log.Println("Error parsing the form", err)
+		http.Error(w, http.StatusText(500), 500)
+		return
+	}
+	file, h, err := r.FormFile("data")
 	// close the opened file to free resources
 	defer func() {
-		if err := f.Close(); err != nil {
+		if err := file.Close(); err != nil {
 			log.Println(err)
 		}
 	}()
-
 	// create a new image
-	img := imageUploader.New(h.Filename, int(h.Size), f)
-
+	img := imageUploader.New(h.Filename, int(h.Size), file)
 	// store in a temp directory
 	// todo: get the destination directory from environment variable
 	fpath, err := img.Store("/tmp")
@@ -163,7 +165,6 @@ func uploadImageHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
-
 	log.Println(fpath)
 	w.Write([]byte("Image upload successful"))
 }

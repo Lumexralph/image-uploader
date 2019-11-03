@@ -36,5 +36,4 @@ func TestTemplateProcessor(t *testing.T) {
 	if !strings.Contains(gotTemplate, wantTemplate) {
 		t.Fatalf("TemplateProcessor(%s, %+v) got %+v; want %+v, could not find input template with token \n", Tpl, wantData, gotTemplate, wantTemplate)
 	}
-
 }

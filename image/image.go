@@ -11,7 +11,7 @@ import (
 	"os"
 )
 
-var BUFFERSIZE = 1024
+var bufferSize = 1024
 
 // Data to model the image data to be uploaded
 type Data struct {
@@ -37,14 +37,14 @@ func (img *Data) Store(imageDir string) (string, error) {
 	if err != nil {
 		return dstFile, err
 	}
+	defer img.file.Close()
 	defer dst.Close()
-
 	// if we get an image lesser than the buffer size to avoid
 	// wasteful memory space
-	if img.size < BUFFERSIZE {
-		BUFFERSIZE = img.size
+	if img.size < bufferSize {
+		bufferSize = img.size
 	}
-	buf := make([]byte, BUFFERSIZE)
+	buf := make([]byte, bufferSize)
 
 	for {
 		// read the content of the file sequentially by bufferring
@@ -52,7 +52,6 @@ func (img *Data) Store(imageDir string) (string, error) {
 		if err != nil && err != io.EOF {
 			return dstFile, err
 		}
-
 		// if it gets to the end of the file
 		if err == io.EOF {
 			break

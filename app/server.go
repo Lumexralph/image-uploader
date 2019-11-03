@@ -1,5 +1,7 @@
 // Package app contains implementation for the server
 // and routing patterns to the handlers
+// Package app provides the router, middlewares, server and
+// handler for the image upload
 package app
 
 import (
