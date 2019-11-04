@@ -7,21 +7,21 @@ import (
 	"testing"
 )
 
-func TestTemplateProcessor(t *testing.T) {
+func TestTemplateProcess(t *testing.T) {
 	wantData := Data{"brankas", "12345"}
-	gotTemplate, err := Processor(Tpl, wantData)
+	gotTemplate, err := Process(Tpl, wantData)
 
-	if err != nil || gotTemplate == "" {
+	if err != nil || gotTemplate == nil {
 		t.Fatalf("TemplateProcessor(%s, %+v) got %+v; could not process template \n", Tpl, wantData, err)
 	}
 
 	wantTemplate := `<title>brankas</title>`
-	if !strings.Contains(gotTemplate, wantTemplate) {
+	if !strings.Contains(string(gotTemplate), wantTemplate) {
 		t.Fatalf("TemplateProcessor(%s, %+v) got %+v; want %+v, could not find title  \n", Tpl, wantData, gotTemplate, wantTemplate)
 	}
 
 	wantTemplate = `<input id="auth" type="hidden" name="auth" value="12345">`
-	if !strings.Contains(gotTemplate, wantTemplate) {
+	if !strings.Contains(string(gotTemplate), wantTemplate) {
 		t.Fatalf("TemplateProcessor(%s, %+v) got %+v; want %+v, could not find title  \n", Tpl, wantData, gotTemplate, wantTemplate)
 	}
 
@@ -33,7 +33,7 @@ func TestTemplateProcessor(t *testing.T) {
 						<br/>
 						<input type="submit" value="Upload">
 					</form>`
-	if !strings.Contains(gotTemplate, wantTemplate) {
+	if !strings.Contains(string(gotTemplate), wantTemplate) {
 		t.Fatalf("TemplateProcessor(%s, %+v) got %+v; want %+v, could not find input template with token \n", Tpl, wantData, gotTemplate, wantTemplate)
 	}
 }

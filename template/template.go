@@ -1,3 +1,4 @@
+// Package template handles the generation of a processed html form
 package template
 
 import (
@@ -30,19 +31,19 @@ type Data struct {
 	Title, Token string
 }
 
-// Processor adds a generated token from the environment to the template
-func Processor(tpl string, d Data) (string, error) {
+// Process adds a generated token from the environment to the template
+func Process(tpl string, d Data) ([]byte, error) {
 	var b bytes.Buffer
 
 	t, err := template.New("webpage").Parse(tpl)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	err = t.Execute(&b, d)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return b.String(), nil
+	return b.Bytes(), nil
 }

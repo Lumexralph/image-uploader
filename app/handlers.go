@@ -1,14 +1,8 @@
 package app
 
 import (
-	imageUploader "github.com/Lumexralph/image-uploader/image"
+	"github.com/Lumexralph/image-uploader/upload"
 	"github.com/Lumexralph/image-uploader/template"
-	"image"
-	"strings"
-	// needed to register the image format
-	_ "image/gif"
-	_ "image/jpeg"
-	_ "image/png"
 	"log"
 	"net/http"
 	"os"
@@ -22,147 +16,28 @@ func templateHandler(w http.ResponseWriter, r *http.Request) {
 		Title: "brankas",
 		Token: token,
 	}
-	tmpl, err := template.Processor(template.Tpl, data)
+	html, err := template.Process(template.Tpl, data)
 	if err != nil {
 		http.Error(w, http.StatusText(500), http.StatusInternalServerError)
 		return
 	}
-	w.Write([]byte(tmpl))
-}
-
-// check the content type
-func fileTypeHandler(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		var valid bool
-
-		if r.Method != "POST" {
-			http.Error(w, http.StatusText(400), 400)
-			return
-		}
-		if err := r.ParseForm(); err != nil {
-			log.Println("Error parsing the form", err)
-			http.Error(w, http.StatusText(500), 500)
-			return
-		}
-		_, header, _ := r.FormFile("data")
-		format := []string{".jpeg", ".jpg", ".png", ".gif"}
-		for _, imgFormat := range format {
-			// check if the file is in jpeg, png, jpg or gif format
-			if strings.HasSuffix(header.Filename, imgFormat) {
-				valid = true
-				break
-			}
-		}
-		if !valid {
-			http.Error(w, "Please supply image of jpg, jpeg, png or gif format", 400)
-			return
-		}
-		next.ServeHTTP(w, r)
-	}
-	return http.HandlerFunc(fn)
-}
-
-// parse body of the request interface
-// parse the html with auth field, check that token are the same
-func checkAuthTokenHandler(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "POST" {
-			http.Error(w, http.StatusText(400), 400)
-			return
-		}
-		//Call to ParseForm makes form fields available.
-		if err := r.ParseForm(); err != nil {
-			log.Println("Error parsing the form", err)
-			http.Error(w, http.StatusText(500), 500)
-			return
-		}
-		if token := r.PostFormValue("auth"); token != os.Getenv("TOKEN") {
-			http.Error(w, http.StatusText(403), 403)
-			return
-		}
-		next.ServeHTTP(w, r)
-	}
-	return http.HandlerFunc(fn)
-}
-
-// check if it is an image
-func imageContentHandler(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "POST" {
-			http.Error(w, http.StatusText(400), 400)
-			return
-		}
-		if err :=  r.ParseForm(); err != nil {
-			log.Println("Error parsing the form", err)
-			http.Error(w, http.StatusText(500), 500)
-			return
-		}
-		file, _, err := r.FormFile("data")
-		if err != nil {
-			log.Print(err)
-			http.Error(w, http.StatusText(500), 500)
-			return
-		}
-		// verify the image
-		if _, _, err = image.Decode(file); err != nil {
-			log.Println("Decoding the image: ", err.Error())
-			// close the opened file to free resources
-			if err := file.Close(); err != nil {
-				log.Println("Closing file: ", err.Error())
-			}
-			http.Error(w, err.Error(), 400)
-			return
-		}
-		next.ServeHTTP(w, r)
-	}
-	return http.HandlerFunc(fn)
-}
-
-// check the file size
-func fileSizeHandler(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "POST" {
-			http.Error(w, http.StatusText(400), 400)
-			return
-		}
-		_, header, err := r.FormFile("data")
-		if err != nil {
-			log.Print(err)
-			http.Error(w, http.StatusText(400), 400)
-			return
-		}
-		// verify the size of the file is not above 8MB
-		sizeLimit := int64(8 << 20)
-		if header.Size > sizeLimit {
-			http.Error(w, "Image size should not be above 8MB", 403)
-			return
-		}
-		next.ServeHTTP(w, r)
-	}
-	return http.HandlerFunc(fn)
+	w.Write(html)
 }
 
 // uploadImageHandler will handle storing the image to a temp directory
 func uploadImageHandler(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
-		log.Println("Error parsing the form", err)
-		http.Error(w, http.StatusText(500), 500)
-		return
-	}
 	file, h, err := r.FormFile("data")
 	// close the opened file to free resources
-	defer func() {
-		if err := file.Close(); err != nil {
-			log.Println(err)
-		}
-	}()
+	defer file.Close()
+
 	// create a new image
-	img := imageUploader.New(h.Filename, int(h.Size), file)
+	img := upload.New(h.Filename, int(h.Size), file)
 	// store in a temp directory
 	// todo: get the destination directory from environment variable
 	fpath, err := img.Store("/tmp")
 	if err != nil {
 		log.Println(err)
+		http.Error(w, "Error occurred while uploading image", 500)
 		return
 	}
 	log.Println(fpath)
