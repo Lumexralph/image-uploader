@@ -1,12 +1,13 @@
 package app
 
 import (
+	"log"
+	"bytes"
 	"fmt"
 	"image"
 	"image/gif"
 	"image/jpeg"
 	"image/png"
-	"io"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -30,39 +31,41 @@ func TestTemplateHandlerWorks(t *testing.T) {
 	}
 }
 
-// createUploadRequest creates a request with the provided uri and parameters
+// newImageUploadRequest creates a request with the provided uri and parameters
 func newImageUploadRequest(uri, formField, fileName, fileExtension string) (r *http.Request, retErr error) {
-	// Set up a pipe to avoid buffering.
-	pr, pw := io.Pipe()
-	// the writer will transform whatever to
-	// multipart form data and pass it to the pipe.
-	w := multipart.NewWriter(pw)
-	go func() {
-		defer w.Close()
-		// create the data form field.
-		formData, err := w.CreateFormFile(formField, fileName+fileExtension)
-		if err != nil {
-			retErr = err
-		}
-		// Create a colored image of the given width and height.
-		img := image.NewNRGBA(image.Rect(0, 0, 256, 256))
-		switch fileExtension {
-		case "png":
-			if err := png.Encode(formData, img); err != nil {
-				retErr = err
-			}
-		case "jpg":
-			if err := jpeg.Encode(formData, img, nil); err != nil {
-				retErr = err
-			}
-		case "gif":
-			if err := gif.Encode(formData, img, nil); err != nil {
-				retErr = err
-			}
+	// create a buffer to write the create image to
+	buf := new(bytes.Buffer)
+	// create a multipart form data to be attached to the request
+	w := multipart.NewWriter(buf)
+	defer func () {
+		if err := w.Close(); err != nil {
+			log.Printf("Error occurred closing the multipart file: %v", err)
 		}
 	}()
 
-	r = httptest.NewRequest("POST", uri, pr)
+	// create the data form field.
+	formData, err := w.CreateFormFile(formField, fileName+fileExtension)
+	if err != nil {
+		retErr = err
+	}
+	// Create a colored image of the given width and height.
+	img := image.NewNRGBA(image.Rect(0, 0, 256, 256))
+	switch fileExtension {
+	case "png":
+		if err := png.Encode(formData, img); err != nil {
+			retErr = err
+		}
+	case "jpg":
+		if err := jpeg.Encode(formData, img, nil); err != nil {
+			retErr = err
+		}
+	case "gif":
+		if err := gif.Encode(formData, img, nil); err != nil {
+			retErr = err
+		}
+	}
+
+	r = httptest.NewRequest("POST", uri, buf)
 	r.Header.Add("Content-Type", w.FormDataContentType())
 	return r, retErr
 }
@@ -74,7 +77,7 @@ func TestUploadImageHandlerWorks(t *testing.T) {
 		t.Run(fmt.Sprintf("Upload %s image", tc), func(t *testing.T) {
 			r, err := newImageUploadRequest("/upload", "data", "test-sample", tc)
 			if err != nil {
-				t.Error(err)
+				t.Fatalf("newImageUploadRequest(%s, %s, %s, %s) failed to create form request, ", "/upload", "data", "test-sample", tc)
 			}
 
 			rr := httptest.NewRecorder()

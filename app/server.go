@@ -5,7 +5,6 @@
 package app
 
 import (
-	handlerchain "github.com/justinas/alice"
 	"log"
 	"net/http"
 	"os"
@@ -16,11 +15,9 @@ import (
 func router() *http.ServeMux {
 	// create a new multiplexer
 	mux := http.NewServeMux()
-	// chain all handlers together from left to right
-	uploadHandlers := handlerchain.New(parsePOSTHandler, fileTypeHandler, checkAuthTokenHandler, fileSizeHandler, imageContentHandler)
 
 	mux.HandleFunc("/", templateHandler)
-	mux.Handle("/upload", uploadHandlers.ThenFunc(uploadImageHandler))
+	mux.Handle("/upload", uploadHandlers(uploadImageHandler))
 
 	return mux
 }

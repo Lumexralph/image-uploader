@@ -2,12 +2,12 @@
 package template
 
 import (
-	"bytes"
 	"html/template"
+	"io"
 )
 
-// Tpl is the html template that will be served to client
-const Tpl = `
+// FormPage is the html template that will be served to client
+const FormPage = `
 			<!DOCTYPE html>
 			<html>
 				<head>
@@ -32,18 +32,11 @@ type Data struct {
 }
 
 // Process adds a generated token from the environment to the template
-func Process(tpl string, d Data) ([]byte, error) {
-	var b bytes.Buffer
-
-	t, err := template.New("webpage").Parse(tpl)
+func Process(tmpl string, data *Data, w io.Writer) error {
+	t, err := template.New("webpage").Parse(tmpl)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	err = t.Execute(&b, d)
-	if err != nil {
-		return nil, err
-	}
-
-	return b.Bytes(), nil
+	return t.Execute(w, data)
 }

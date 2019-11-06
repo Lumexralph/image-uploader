@@ -34,6 +34,7 @@ func fileTypeHandler(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		_, header, err := r.FormFile("data")
 		if err != nil {
+			log.Printf("Error occurred getting file from form: %v", err)
 			http.Error(w, http.StatusText(400), 400)
 			return
 		}
@@ -73,7 +74,7 @@ func imageContentHandler(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		file, _, err := r.FormFile("data")
 		if err != nil {
-			log.Print(err)
+			log.Printf("Error occurred getting file from form: %v", err)
 			http.Error(w, http.StatusText(500), 500)
 			return
 		}
@@ -95,7 +96,7 @@ func fileSizeHandler(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		_, header, err := r.FormFile("data")
 		if err != nil {
-			log.Print(err)
+			log.Printf("Error occurred getting file from form: %v", err)
 			http.Error(w, http.StatusText(400), 400)
 			return
 		}

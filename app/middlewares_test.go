@@ -25,7 +25,7 @@ func TestParsePOSTHandlerWithWorks(t *testing.T) {
 
 	r, err := newImageUploadRequest("/upload", "data", "test-sample", ".png")
 	if err != nil {
-		t.Error(err)
+		t.Fatalf("newImageUploadRequest(%s, %s, %s, %s) failed to create form request", "/upload", "data", "test-sample", ".png")
 	}
 	rr := httptest.NewRecorder()
 	handler := uploadHandlers.ThenFunc(uploadImageHandler)
@@ -44,7 +44,7 @@ func TestFileTypeHandlerWorks(t *testing.T) {
 		t.Run("Upload %s file", func(t *testing.T) {
 			r, err := newImageUploadRequest("/upload", "data", "test-sample", tc)
 			if err != nil {
-				t.Error(err)
+				t.Fatalf("newImageUploadRequest(%s, %s, %s, %s) failed to create form request", "/upload", "data", "test-sample", tc)
 			}
 			rr := httptest.NewRecorder()
 			handler := uploadHandlers.ThenFunc(uploadImageHandler)
@@ -65,7 +65,7 @@ func TestFileTypeHandlerWithWrongImageFormat(t *testing.T) {
 		t.Run("Upload %s file", func(t *testing.T) {
 			r, err := newImageUploadRequest("/upload", "data", "test-sample", tc)
 			if err != nil {
-				t.Error(err)
+				t.Fatalf("newImageUploadRequest(%s, %s, %s, %s) failed to create form request", "/upload", "data", "test-sample", tc)
 			}
 			rr := httptest.NewRecorder()
 			handler := uploadHandlers.ThenFunc(uploadImageHandler)
@@ -83,9 +83,10 @@ func TestCheckAuthTokenHandlerWorks(t *testing.T) {
 
 	r, err := newImageUploadRequest("/upload", "data", "test-sample", ".png")
 	if err != nil {
-		t.Error(err)
+		t.Fatalf("newImageUploadRequest(%s, %s, %s, %s) failed to create form request", "/upload", "data", "test-sample", ".png")
 	}
 	rr := httptest.NewRecorder()
+
 	handler := uploadHandlers.ThenFunc(uploadImageHandler)
 	handler.ServeHTTP(rr, r)
 
@@ -94,12 +95,30 @@ func TestCheckAuthTokenHandlerWorks(t *testing.T) {
 	}
 }
 
+func TestCheckAuthTokenHandlerWithWrongToken(t *testing.T) {
+	uploadHandlers := handlerchain.New(checkAuthTokenHandler)
+
+	r, err := newImageUploadRequest("/upload", "data", "test-sample", ".png")
+	if err != nil {
+		t.Fatalf("newImageUploadRequest(%s, %s, %s, %s) failed to create form request", "/upload", "data", "test-sample", ".png")
+	}
+	rr := httptest.NewRecorder()
+	r.ParseForm()
+	r.PostForm["auth"] = []string{"12345"}
+	handler := uploadHandlers.ThenFunc(uploadImageHandler)
+	handler.ServeHTTP(rr, r)
+
+	if status := rr.Code; status != http.StatusForbidden {
+		t.Errorf("checkAuthTokenHandler(%v, %+v) for POST /upload; returned wrong status code: got %v want %v", rr, r, status, http.StatusForbidden)
+	}
+}
+
 func TestFileSizeHandlerWithLessThan8MBFile(t *testing.T) {
 	uploadHandlers := handlerchain.New(fileSizeHandler)
 
 	r, err := newImageUploadRequest("/upload", "data", "test-sample", ".gif")
 	if err != nil {
-		t.Error(err)
+		t.Fatalf("newImageUploadRequest(%s, %s, %s, %s) failed to create form request", "/upload", "data", "test-sample", ".gif")
 	}
 
 	rr := httptest.NewRecorder()
@@ -116,7 +135,7 @@ func TestFileSizeHandlerWithOver8MBFile(t *testing.T) {
 
 	r, err := newImageUploadRequest("/upload", "data", "test-sample", ".gif")
 	if err != nil {
-		t.Error(err)
+		t.Fatalf("newImageUploadRequest(%s, %s, %s, %s) failed to create form request", "/upload", "data", "test-sample", ".gif")
 	}
 	_, header, _ := r.FormFile("data")
 	header.Size = int64(9 << 20)
@@ -135,7 +154,7 @@ func TestFileImageContentHandlerWithNonImage(t *testing.T) {
 
 	r, err := newImageUploadRequest("/upload", "data", "test-sample", ".gi")
 	if err != nil {
-		t.Error(err)
+		t.Fatalf("newImageUploadRequest(%s, %s, %s, %s) failed to create form request", "/upload", "data", "test-sample", ".gi")
 	}
 
 	rr := httptest.NewRecorder()
@@ -146,5 +165,3 @@ func TestFileImageContentHandlerWithNonImage(t *testing.T) {
 		t.Errorf("fileSizeHandler(%v, %+v) for POST /upload; returned wrong status code: got %v want %v", rr, r, status, http.StatusBadRequest)
 	}
 }
-
-// todo: Test with right Image content
