@@ -1,9 +1,9 @@
 package app
 
 import (
-	handlerchain "github.com/justinas/alice"
-	"github.com/Lumexralph/image-uploader/upload"
 	"github.com/Lumexralph/image-uploader/template"
+	"github.com/Lumexralph/image-uploader/upload"
+	handlerchain "github.com/justinas/alice"
 	"log"
 	"net/http"
 	"os"
@@ -19,14 +19,25 @@ func templateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	err := template.Process(template.FormPage, data, w)
 	if err != nil {
-		log.Printf("Error occurred process the template: %v", err)
+		log.Printf("Error occurred processing the template: %v", err)
 		http.Error(w, http.StatusText(500), http.StatusInternalServerError)
 		return
 	}
 }
 
+// fileHandler will handle operations pertaining to a file
+type fileHandler struct {
+	db databaseHandler
+}
+
+// fileData to hold the metadata information to be saved to the database
+type fileData struct {
+	name, slug, format, path string
+	size int64
+}
+
 // uploadImageHandler will handle storing the image to a temp directory
-func uploadImageHandler(w http.ResponseWriter, r *http.Request) {
+func (fh *fileHandler) uploadImageHandler(w http.ResponseWriter, r *http.Request) {
 	file, h, err := r.FormFile("data")
 	if err != nil {
 		log.Printf("Error occurred getting file from form: %v", err)
@@ -44,11 +55,23 @@ func uploadImageHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error occurred while uploading image", 500)
 		return
 	}
-	log.Println(fpath)
+	// create the metadata
+	format := h.Filename[(len(h.Filename) - 4):]
+	name := h.Filename[:len(h.Filename) - 4]
+	slug := name + "-" + randomStringGenerator()
+	fd := &fileData{
+		name: name,
+		slug: slug,
+		format: format,
+		path: fpath,
+		size: h.Size,
+	}
+	// persist the metadata to the database
+	fh.db.CreateFileMetaData("file_metadata", fd)
 	w.Write([]byte("Image upload successful"))
 }
 
-func uploadHandlers(handler func(http.ResponseWriter, *http.Request)) http. Handler {
+func uploadHandlers(handler func(http.ResponseWriter, *http.Request)) http.Handler {
 	// chain all handlers together from left to right
 	uploadHandlers := handlerchain.New(parsePOSTHandler, fileTypeHandler, checkAuthTokenHandler, fileSizeHandler, imageContentHandler)
 

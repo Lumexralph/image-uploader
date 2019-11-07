@@ -37,6 +37,6 @@ func Process(tmpl string, data *Data, w io.Writer) error {
 	if err != nil {
 		return err
 	}
-
+	// send the template to whatever writer is provided
 	return t.Execute(w, data)
 }

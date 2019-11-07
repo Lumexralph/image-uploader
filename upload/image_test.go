@@ -28,7 +28,7 @@ func TestImageCreation(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(fmt.Sprintf("Create file %s", tc.name), func(t *testing.T) {
 			// open the image
-			f, err := os.Open("../example.png")
+			f, err := os.Open("test.png")
 			if err != nil {
 				t.Fatal(err)
 			}

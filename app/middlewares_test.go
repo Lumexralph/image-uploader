@@ -7,12 +7,17 @@ import (
 	"testing"
 )
 
+type mockDB struct{}
+
+func (mdb *mockDB) CreateFileMetaData(table string, fd *fileData) { }
+
 func TestParsePOSTHandlerWithWrongMethod(t *testing.T) {
+	fh := &fileHandler{db: &mockDB{}}
 	uploadHandlers := handlerchain.New(parsePOSTHandler)
 	// make request with wrong method
 	r := httptest.NewRequest("GET", "/upload", nil)
 	rr := httptest.NewRecorder()
-	handler := uploadHandlers.ThenFunc(uploadImageHandler)
+	handler := uploadHandlers.ThenFunc(fh.uploadImageHandler)
 	handler.ServeHTTP(rr, r)
 
 	if status := rr.Code; status != http.StatusBadRequest {
@@ -21,6 +26,8 @@ func TestParsePOSTHandlerWithWrongMethod(t *testing.T) {
 }
 
 func TestParsePOSTHandlerWithWorks(t *testing.T) {
+	fh := &fileHandler{db: &mockDB{}}
+
 	uploadHandlers := handlerchain.New(parsePOSTHandler)
 
 	r, err := newImageUploadRequest("/upload", "data", "test-sample", ".png")
@@ -28,7 +35,7 @@ func TestParsePOSTHandlerWithWorks(t *testing.T) {
 		t.Fatalf("newImageUploadRequest(%s, %s, %s, %s) failed to create form request", "/upload", "data", "test-sample", ".png")
 	}
 	rr := httptest.NewRecorder()
-	handler := uploadHandlers.ThenFunc(uploadImageHandler)
+	handler := uploadHandlers.ThenFunc(fh.uploadImageHandler)
 	handler.ServeHTTP(rr, r)
 
 	if status := rr.Code; status != http.StatusOK {
@@ -37,6 +44,8 @@ func TestParsePOSTHandlerWithWorks(t *testing.T) {
 }
 
 func TestFileTypeHandlerWorks(t *testing.T) {
+	fh := &fileHandler{db: &mockDB{}}
+
 	cases := []string{".png", ".jpg", ".gif"}
 	uploadHandlers := handlerchain.New(fileTypeHandler)
 
@@ -47,7 +56,7 @@ func TestFileTypeHandlerWorks(t *testing.T) {
 				t.Fatalf("newImageUploadRequest(%s, %s, %s, %s) failed to create form request", "/upload", "data", "test-sample", tc)
 			}
 			rr := httptest.NewRecorder()
-			handler := uploadHandlers.ThenFunc(uploadImageHandler)
+			handler := uploadHandlers.ThenFunc(fh.uploadImageHandler)
 			handler.ServeHTTP(rr, r)
 
 			if status := rr.Code; status != http.StatusOK {
@@ -58,6 +67,8 @@ func TestFileTypeHandlerWorks(t *testing.T) {
 }
 
 func TestFileTypeHandlerWithWrongImageFormat(t *testing.T) {
+	fh := &fileHandler{db: &mockDB{}}
+
 	cases := []string{".pdf", ".csv", ".mp4"}
 	uploadHandlers := handlerchain.New(fileTypeHandler)
 
@@ -68,7 +79,7 @@ func TestFileTypeHandlerWithWrongImageFormat(t *testing.T) {
 				t.Fatalf("newImageUploadRequest(%s, %s, %s, %s) failed to create form request", "/upload", "data", "test-sample", tc)
 			}
 			rr := httptest.NewRecorder()
-			handler := uploadHandlers.ThenFunc(uploadImageHandler)
+			handler := uploadHandlers.ThenFunc(fh.uploadImageHandler)
 			handler.ServeHTTP(rr, r)
 
 			if status := rr.Code; status != http.StatusBadRequest {
@@ -79,6 +90,7 @@ func TestFileTypeHandlerWithWrongImageFormat(t *testing.T) {
 }
 
 func TestCheckAuthTokenHandlerWorks(t *testing.T) {
+	fh := &fileHandler{db: &mockDB{}}
 	uploadHandlers := handlerchain.New(checkAuthTokenHandler)
 
 	r, err := newImageUploadRequest("/upload", "data", "test-sample", ".png")
@@ -87,7 +99,7 @@ func TestCheckAuthTokenHandlerWorks(t *testing.T) {
 	}
 	rr := httptest.NewRecorder()
 
-	handler := uploadHandlers.ThenFunc(uploadImageHandler)
+	handler := uploadHandlers.ThenFunc(fh.uploadImageHandler)
 	handler.ServeHTTP(rr, r)
 
 	if status := rr.Code; status != http.StatusOK {
@@ -96,6 +108,7 @@ func TestCheckAuthTokenHandlerWorks(t *testing.T) {
 }
 
 func TestCheckAuthTokenHandlerWithWrongToken(t *testing.T) {
+	fh := &fileHandler{db: &mockDB{}}
 	uploadHandlers := handlerchain.New(checkAuthTokenHandler)
 
 	r, err := newImageUploadRequest("/upload", "data", "test-sample", ".png")
@@ -105,7 +118,7 @@ func TestCheckAuthTokenHandlerWithWrongToken(t *testing.T) {
 	rr := httptest.NewRecorder()
 	r.ParseForm()
 	r.PostForm["auth"] = []string{"12345"}
-	handler := uploadHandlers.ThenFunc(uploadImageHandler)
+	handler := uploadHandlers.ThenFunc(fh.uploadImageHandler)
 	handler.ServeHTTP(rr, r)
 
 	if status := rr.Code; status != http.StatusForbidden {
@@ -114,6 +127,7 @@ func TestCheckAuthTokenHandlerWithWrongToken(t *testing.T) {
 }
 
 func TestFileSizeHandlerWithLessThan8MBFile(t *testing.T) {
+	fh := &fileHandler{db: &mockDB{}}
 	uploadHandlers := handlerchain.New(fileSizeHandler)
 
 	r, err := newImageUploadRequest("/upload", "data", "test-sample", ".gif")
@@ -122,7 +136,7 @@ func TestFileSizeHandlerWithLessThan8MBFile(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
-	handler := uploadHandlers.ThenFunc(uploadImageHandler)
+	handler := uploadHandlers.ThenFunc(fh.uploadImageHandler)
 	handler.ServeHTTP(rr, r)
 
 	if status := rr.Code; status != http.StatusOK {
@@ -131,6 +145,7 @@ func TestFileSizeHandlerWithLessThan8MBFile(t *testing.T) {
 }
 
 func TestFileSizeHandlerWithOver8MBFile(t *testing.T) {
+	fh := &fileHandler{db: &mockDB{}}
 	uploadHandlers := handlerchain.New(fileSizeHandler)
 
 	r, err := newImageUploadRequest("/upload", "data", "test-sample", ".gif")
@@ -141,7 +156,7 @@ func TestFileSizeHandlerWithOver8MBFile(t *testing.T) {
 	header.Size = int64(9 << 20)
 
 	rr := httptest.NewRecorder()
-	handler := uploadHandlers.ThenFunc(uploadImageHandler)
+	handler := uploadHandlers.ThenFunc(fh.uploadImageHandler)
 	handler.ServeHTTP(rr, r)
 
 	if status := rr.Code; status != http.StatusForbidden {
@@ -150,6 +165,7 @@ func TestFileSizeHandlerWithOver8MBFile(t *testing.T) {
 }
 
 func TestFileImageContentHandlerWithNonImage(t *testing.T) {
+	fh := &fileHandler{db: &mockDB{}}
 	uploadHandlers := handlerchain.New(imageContentHandler)
 
 	r, err := newImageUploadRequest("/upload", "data", "test-sample", ".gi")
@@ -158,7 +174,7 @@ func TestFileImageContentHandlerWithNonImage(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
-	handler := uploadHandlers.ThenFunc(uploadImageHandler)
+	handler := uploadHandlers.ThenFunc(fh.uploadImageHandler)
 	handler.ServeHTTP(rr, r)
 
 	if status := rr.Code; status != http.StatusBadRequest {

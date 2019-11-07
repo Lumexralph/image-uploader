@@ -14,6 +14,7 @@ import (
 	"testing"
 )
 
+
 func TestTemplateHandlerWorks(t *testing.T) {
 	// create a request to pass to the handler
 	req := httptest.NewRequest("GET", "/", nil)
@@ -72,6 +73,7 @@ func newImageUploadRequest(uri, formField, fileName, fileExtension string) (r *h
 
 func TestUploadImageHandlerWorks(t *testing.T) {
 	cases := []string{".png", ".jpg", ".gif"}
+	fh := &fileHandler{db: &mockDB{}}
 
 	for _, tc := range cases {
 		t.Run(fmt.Sprintf("Upload %s image", tc), func(t *testing.T) {
@@ -81,7 +83,7 @@ func TestUploadImageHandlerWorks(t *testing.T) {
 			}
 
 			rr := httptest.NewRecorder()
-			handler := http.HandlerFunc(uploadImageHandler)
+			handler := http.HandlerFunc(fh.uploadImageHandler)
 			handler.ServeHTTP(rr, r)
 
 			if status := rr.Code; status != http.StatusOK {

@@ -10,21 +10,24 @@ import (
 	"os"
 )
 
-// router creates to handle direction of requests to respective
+// Router creates to handle direction of requests to respective
 // handlers
-func router() *http.ServeMux {
+func Router(db *DB) *http.ServeMux {
+	// initialize the handler with the db
+	fh := &fileHandler{db}
+
 	// create a new multiplexer
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", templateHandler)
-	mux.Handle("/upload", uploadHandlers(uploadImageHandler))
+	mux.Handle("/upload", uploadHandlers(fh.uploadImageHandler))
 
 	return mux
 }
 
 // Server creates the webserver
-func Server() error {
+func Server(router *http.ServeMux) error {
 	port := os.Getenv("PORT")
 	log.Printf("Starting server on port:%s... \n", port)
-	return http.ListenAndServe(":"+port, router())
+	return http.ListenAndServe(":"+port, router)
 }

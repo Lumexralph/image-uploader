@@ -56,7 +56,7 @@ func fileTypeHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
-// parse body of the request interface
+// parse form of the request interface
 // parse the html with auth field, check that token are the same
 func checkAuthTokenHandler(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
