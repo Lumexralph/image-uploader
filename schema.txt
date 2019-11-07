@@ -1,0 +1,10 @@
+// run this script to create the table
+CREATE TABLE file_metadata (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR (50) NOT NULL,
+		slug VARCHAR (255) NOT NULL UNIQUE,
+		format VARCHAR (10) NOT NULL,
+		path VARCHAR (255) NOT NULL,
+		size INT NOT NULL,
+		created_on TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+)
