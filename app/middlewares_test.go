@@ -1,6 +1,9 @@
 package app
 
 import (
+	"github.com/joho/godotenv"
+	"os"
+	"fmt"
 	handlerchain "github.com/justinas/alice"
 	"net/http"
 	"net/http/httptest"
@@ -179,5 +182,38 @@ func TestFileImageContentHandlerWithNonImage(t *testing.T) {
 
 	if status := rr.Code; status != http.StatusBadRequest {
 		t.Errorf("fileSizeHandler(%v, %+v) for POST /upload; returned wrong status code: got %v want %v", rr, r, status, http.StatusBadRequest)
+	}
+}
+
+// this test is more like an integration test
+func TestRouterWithDBConnection(t *testing.T) {
+	err := godotenv.Load("../.env")
+	if err != nil {
+		t.Fatal("godotenv.Load() failed to load env. file")
+	}
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbname := os.Getenv("DB_TEST_NAME")
+	sslmode := os.Getenv("DB_SSLMODE")
+
+	// create database url
+	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", host, port, user, password, dbname, sslmode)
+
+	// create db connection
+	db, err := NewDB("postgres", connStr)
+	if err != nil {
+		t.Fatalf("NewDB(%v, %v) failed to create database connection", "postgres", connStr)
+	}
+	defer db.Close()
+
+	r := httptest.NewRequest("GET", "/", nil)
+	rr := httptest.NewRecorder()
+	handler := Router(db)
+	handler.ServeHTTP(rr, r)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Router(db) for GET /; returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
 }

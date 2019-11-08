@@ -17,18 +17,18 @@ import (
 
 func TestTemplateHandlerWorks(t *testing.T) {
 	// create a request to pass to the handler
-	req := httptest.NewRequest("GET", "/", nil)
+	r := httptest.NewRequest("GET", "/", nil)
 
 	// create a ResponseRecorder to record the response
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(templateHandler)
 
 	// make a request to the handler calling the ServeHTTP method
-	handler.ServeHTTP(rr, req)
+	handler.ServeHTTP(rr, r)
 
 	// Check the status code of the response
 	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("templateHandler(%v, %+v) for url /; returned wrong status code: got %v want %v", rr, req, status, http.StatusOK)
+		t.Errorf("templateHandler(%v, %+v) for url /; returned wrong status code: got %v want %v", rr, r, status, http.StatusOK)
 	}
 }
 
